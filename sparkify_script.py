@@ -2,9 +2,6 @@
 This code was copied over from a Jupyter Notebook analysis and is largely unoptimized as a script. Forgive the messiness!
 """
 
-import pandas as pd
-import numpy as np
-
 from pyspark.sql import SparkSession, Window
 from pyspark.sql.functions import count, col, udf, desc, max as Fmax, lag, struct, date_add, sum as Fsum, datediff, date_trunc, row_number, when, coalesce, avg as Favg
 from pyspark.sql.types import IntegerType, DateType
@@ -15,6 +12,7 @@ from pyspark.ml.feature import StandardScaler, StringIndexer, VectorAssembler
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 
 import datetime
+import sys
 
 def label_churn(x):
     '''
@@ -48,7 +46,12 @@ if __name__ == '__main__':
         .appName("Sparkify") \
         .getOrCreate()
 
-    event_data = "s3n://udacity-dsnd/sparkify/sparkify_event_data.json"
+    if sys.argv[1] == 'mini':
+        event_data = "s3n://udacity-dsnd/sparkify/mini_sparkify_event_data.json"
+    
+    else:
+        event_data = "s3n://udacity-dsnd/sparkify/sparkify_event_data.json"
+        
     df = spark.read.json(event_data)
 
     # Dropping the blank userIds
@@ -217,7 +220,7 @@ if __name__ == '__main__':
                         Fsum(col('addP_flag')).alias('sess_addP'),
                         Fsum(col('addF_flag')).alias('sess_addF'))
 
-    df_sess_agg = df_sess.groupBy('userId')\
+    df_sess_agg = df_sess.groupBy('userId') \
                     .agg(Favg(col('sess_listens')).alias('avg_sess_listens'),
                         Favg(col('sess_thU')).alias('avg_sess_thU'),
                         Favg(col('sess_thD')).alias('avg_sess_thD'),
@@ -230,7 +233,7 @@ if __name__ == '__main__':
 
     dfUserMatrix = dfUserMatrix.join(df_listens_user,['userId']).join(df_sess_agg,['userId'])
 
-    gender_indexer = StringIndexer(inputCol='gender',outputCol='gender_indexed')
+    gender_indexer = StringIndexer(inputCol='gender',outputCol='gender_indexed',handleInvalid="keep")
     fitted_gender_indexer = gender_indexer.fit(dfUserMatrix)
     dfModel = fitted_gender_indexer.transform(dfUserMatrix)
 
@@ -312,14 +315,17 @@ if __name__ == '__main__':
     f1 = f1_eval.evaluate(predictions)
     print(f'Accuracy: {acc:<4.2%} F-1 Score: {f1:<4.3f}') 
 
-
-    # Hyperparameters of the best performing model
-    print('Model Best Hyperparameters')
-    for key, value in cvModel.getEstimatorParamMaps()[np.argmax(cvModel.avgMetrics)].items():
-        print(f'{key}: {value}')
+    # # Hyperparameters of the best performing model
+    # print('Model Best Hyperparameters')
+    # for key, value in cvModel.getEstimatorParamMaps()[np.argmax(cvModel.avgMetrics)].items():
+    #     print(f'{key}: {value}')
 
     # Saves model
     model_file_path = str(datetime.datetime.now().timestamp())+'_'+str(cvModel)+'_'+'Acc_'+str(round(acc,3))+'_'+'F1_'+str(round(f1,3))
     cvModel.save(model_save_file)
+
+    # Saving User Matrix
+    user_matrix_file_path = str(datetime.datetime.now().timestamp())+'_UserMatrix'
+    dfUserMatrix.coalesce(1).write.format('json').save('/your_path/output_directory')
 
     spark.stop()
