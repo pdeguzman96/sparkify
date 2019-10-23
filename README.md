@@ -22,7 +22,7 @@ The data provided is in transactional event format. Each row relates to one uniq
 
 Here's a comparison of our churn vs no-churn users on my engineered features:
 
-![Churn Vs. No Churn](/images/churn_nochurn.png)
+![Churn Vs. No Churn](./images/churn_nochurn.png)
 
 Using a tighter user-metric matrix (a matrix where users are the rows, and metrics are the engineered features understanding user activity), I then tested out various classification models (`LogisticRegression`, `RandomForestClassifier`,`GBTClassifier`). 
 
@@ -37,7 +37,11 @@ After looking at feature importances from the `GBTClassifier`, I found that thes
 
 For your reference, here's an image of the calculated feature importances:
 
-![GBT Importances](/images/gbt_importances.png)
+![GBT Importances](./images/gbt_importances.png)
+
+And here's how the final model trained on 12GB of data performed on test data:
+
+![AWS Model](./images/AWSresult.png)
 
 ## Possible Improvements
 
