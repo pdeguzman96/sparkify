@@ -1,7 +1,7 @@
 # Predicting Customer Churn
 Sparkify is an imaginary music app company, and we used a small subset (128MB) of their user activity data to predict churn, then extend the same analysis to a larger dataset (12GB) on an AWS EMR cluster. 
 
-Much more information on this analysis and interpretation of the results can be found in [this blog post on Medium]() and in the Jupyter notebook provided in this repo.
+Much more information on this analysis and interpretation of the results can be found in [this blog post on Medium](https://medium.com/@patrickjohnyudeguzman/predicting-customer-churn-with-pyspark-95cd352d393) and in the Jupyter notebook provided in this repo.
 
 I analyzed the smaller dataset then created a data transformation & machine learning workflow within a Jupyter notebook, then extended this to the larger dataset using a 4-node cluster using AWS EMR.
 
@@ -22,7 +22,7 @@ The data provided is in transactional event format. Each row relates to one uniq
 
 Here's a comparison of our churn vs no-churn users on my engineered features:
 
-![Churn Vs. No Churn](/images/churn_nochurn.png)
+![Churn Vs. No Churn](./images/churn_nochurn.png)
 
 Using a tighter user-metric matrix (a matrix where users are the rows, and metrics are the engineered features understanding user activity), I then tested out various classification models (`LogisticRegression`, `RandomForestClassifier`,`GBTClassifier`). 
 
@@ -37,7 +37,11 @@ After looking at feature importances from the `GBTClassifier`, I found that thes
 
 For your reference, here's an image of the calculated feature importances:
 
-![GBT Importances](/images/gbt_importances.png)
+![GBT Importances](./images/gbt_importances.png)
+
+And here's how the final model trained on 12GB of data performed on test data:
+
+![AWS Model](./images/AWSresult.png)
 
 ## Possible Improvements
 
