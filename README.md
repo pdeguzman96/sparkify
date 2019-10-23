@@ -1,71 +1,55 @@
 # Predicting Customer Churn
+Sparkify is an imaginary music app company, and we used a small subset (128MB) of their user activity data to predict churn, then extend the same analysis to a larger dataset (12GB) on an AWS EMR cluster. 
 
-The goal of this repository is to show how we can predict customer churn with Spark.
-Although we are using Spark in local mode here, and technically the data could be 
-analyzed on a single machine, we process the data and build the model with Spark in order
-to create an extensible framework. The analysis conducted here could scale to much
-bigger datasets, provided the code be deployed on a cluster capable of handling the 
-computations necessary. 
+Much more information on this analysis and interpretation of the results can be found in [this blog post on Medium]() and in the Jupyter notebook provided in this repo.
 
-Sparkify is an imaginary music app company, and we use a small subset of their log
-data to try and predict churn. More context on this analysis and interpretation of
-the results can be found in [this blog post on Medium](https://medium.com/@celestinhermez/predicting-customer-churn-with-spark-4d093907b2dc).
+I analyzed the smaller dataset then created a data transformation & machine learning workflow within a Jupyter notebook, then extended this to the larger dataset using a 4-node cluster using AWS EMR.
 
-## File Structure
+## Files in this Repo
 
-* **mini_sparkify_event_data.json**: this is the log data that we use in this example.
-It contains information about 226 distinct users, with actions as detailed as giving
-a thumbs up to a song or changing the settings of the account
-* **Sparkify.ipynb**: this is the Spark notebook which contains all the code for this 
-analysis. In order to run it, `pyspark`, `pandas`, `matplotlib`, `seaborn` and
-`datetime` have to be installed
-* **Sparkify.html**: an HTML version of the notebook
-* **images**: the three png files are the graphs included in the Medium blog post
+* **SparkifyAnalysis.ipynb**: this is the Spark notebook which contains all the code for the analysis on the smaller dataset.
+* **SparkifyAnalysis.html**: an HTML version of the notebook
+* **spaykify_script.py**: a Python script version of the notebook analysis meant to run in AWS EMR
 
 ## Analysis
 
-After loading and cleaning the data, we create features, both related to the nature of the 
-account (paid vs. free, state, registration date) and to behaviors taken on platform
-(thumbs up, creation of playlists, number of songs per session etc.). We engineer
-these features with Spark and leverage the `Pipeline` class to efficiently process the data.
-One processing step which is particularly important is to upsample the positive class
-since the proportion of users who churned is small and this could bias the accuracy 
-of our model. To do so, we sample with replacement from the population of users who
-churned.
+The data provided is in transactional event format. Each row relates to one unique user performing some activity (i.e. listen to a song, visit home page, etc.). After cleaning and exploring the data, features were created to better understand how each user behaves, such as...
+- the most consecutive days a user listens to a song
+- average listens, thumbs ups, add to playlists, etc. per session
+- total errors, listens, thumbs ups, etc.
 
-We then test out various classification models (`LogisticRegression`, `RandomForestClassifier`,
-`GBTClassifier`) and compare their accuracy and F1 score on the test set. From there,
-we choose to tune a logistic regression model further through a `CrossValidator` 
-performing the GridSearch algorithm on 3 folds, with the accuracy as the optimization
-metric. We choose to tune the logistic regression because of the interpretability of 
-its coefficients. 
+Here's a comparison of our churn vs no-churn users on my engineered features:
 
-After hyperparameter tuning, we have a model which has 73% accuracy on the test set,
-with a F1 score of 0.7. This means we are not disproportionately predicting one of the classes and
-have a good balance between precision and recall. Interestingly, there is no improvement
-after hyperparameter tuning through Grid Search, most likely due to the small size
-of our train set (191 users). 
-Examining feature importance, we conclude that both static features (such as the state
-or the registration month) as well as on-platform behaviors (adding a friend) matter
-when making a prediction. Getting this insight is crucial for Sparkify, because they can
-target these users at risk with special offers (discounts, personalized messages) to try  
-and mitigate the churn which is likely to happen. Internally, this could be automated
-by running the model regularly (every day/week) and flagging users at risk.
+![Churn Vs. No Churn]('images/churn_nochurn.png')
+
+Using a tighter user-metric matrix (a matrix where users are the rows, and metrics are the engineered features understanding user activity), I then tested out various classification models (`LogisticRegression`, `RandomForestClassifier`,`GBTClassifier`). 
+
+From there, I choose to tune a `GBTClassifier` model further through a `CrossValidator` and `ParamGridBuilder`, performing the GridSearch algorithm on 3 folds corss validation with accuracy as the optimization metric. 
+
+After hyperparameter tuning, we have a model which had 82.35% accuracy and 0.831 F-1 Score on the test set (from the smaller dataset). This was about a 3% and .04 improvement on initial accuracy and F-1 Score respectively.
+
+After looking at feature importances from the `GBTClassifier`, I found that these were the top three most important features:
+- Average song plays per session
+- Total thumbs ups
+- Most consecutive days not playing songs
+
+For your reference, here's an image of the calculated feature importances:
+
+![GBT Importances]('images/gbt_importances.png')
 
 ## Possible Improvements
 
-This analysis would gain from leveraging a larger dataset and being deployed on a cluster.
-Grid search is a particularly computationally expensive operation, but with larger resources and more time
-a more extensive search over a larger dataset and hyperparameter space
-could be conducted to further tune the model and likely improve overall accuracy.
+A lot more features can be engineered from user activity, such as thumbs-ups per day/week/month, thumbs ups to thumbs downs ratio, etc. Feature engineering can improve results better than simply optimizing one algorithm.
 
-Moreover, this model should not be static but run somewhat regularly as user behaviors
-and the consumer base evolve. It is important not to rely on an outdated model for such
-an important aspect of the business.
+Thus, further work can be done extracting more features from our transactional user data to improve our predictions!
 
-Finally, some A/B tests could be set up to examine the insights of this model, 
-in particular the resulting mitigating actions taken. One possibility would be 
-to find users identified as potential churners, split them into
-a control and treatment group, assign some "churn-mitigating" treatment and compare their 
-churn rates through statistical hypothesis testing. This approach would be a rigorous
-follow-up to this model. 
+Once a model is created, perhaps it can be deployed in production and run every x-amount of days or hours. Once we have a prediction on a user that is likely to churn, we have an opportunity to intervene!
+
+To evaluate how well this hypothetically deployed model does, we can run some proof-of-concept analysis and not intervene on its predictions for a given testing period. If the users it predicts will churn end up churning at a higher rate than the average user, this can indicate that our model is working correctly!
+
+## Dependencies
+- pyspark
+- numpy
+- pandas
+- matplotlib
+- seaborn

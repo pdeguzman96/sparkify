@@ -322,10 +322,10 @@ if __name__ == '__main__':
 
     # Saves model
     model_file_path = str(datetime.datetime.now().timestamp())+'_'+str(cvModel)+'_'+'Acc_'+str(round(acc,3))+'_'+'F1_'+str(round(f1,3))
-    cvModel.save(model_save_file)
+    cvModel.save(model_file_path)
 
     # Saving User Matrix
     user_matrix_file_path = str(datetime.datetime.now().timestamp())+'_UserMatrix'
-    dfUserMatrix.coalesce(1).write.format('json').save('/your_path/output_directory')
+    dfUserMatrix.coalesce(1).write.format('json').save(user_matrix_file_path)
 
     spark.stop()
