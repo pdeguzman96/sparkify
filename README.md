@@ -10,6 +10,8 @@ I analyzed the smaller dataset then created a data transformation & machine lear
 * **SparkifyAnalysis.ipynb**: this is the Spark notebook which contains all the code for the analysis on the smaller dataset.
 * **SparkifyAnalysis.html**: an HTML version of the notebook
 * **spaykify_script.py**: a Python script version of the notebook analysis meant to run in AWS EMR
+* **.gitignore**: git utility file to prevent uploading certain files
+* **images**: images used in the README
 
 ## Analysis
 
