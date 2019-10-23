@@ -10,6 +10,8 @@ I analyzed the smaller dataset then created a data transformation & machine lear
 * **SparkifyAnalysis.ipynb**: this is the Spark notebook which contains all the code for the analysis on the smaller dataset.
 * **SparkifyAnalysis.html**: an HTML version of the notebook
 * **spaykify_script.py**: a Python script version of the notebook analysis meant to run in AWS EMR
+* **.gitignore**: git utility file to prevent uploading certain files
+* **images**: images used in the README
 
 ## Analysis
 
@@ -20,7 +22,7 @@ The data provided is in transactional event format. Each row relates to one uniq
 
 Here's a comparison of our churn vs no-churn users on my engineered features:
 
-![Churn Vs. No Churn]('images/churn_nochurn.png')
+![Churn Vs. No Churn](/images/churn_nochurn.png)
 
 Using a tighter user-metric matrix (a matrix where users are the rows, and metrics are the engineered features understanding user activity), I then tested out various classification models (`LogisticRegression`, `RandomForestClassifier`,`GBTClassifier`). 
 
@@ -35,7 +37,7 @@ After looking at feature importances from the `GBTClassifier`, I found that thes
 
 For your reference, here's an image of the calculated feature importances:
 
-![GBT Importances]('images/gbt_importances.png')
+![GBT Importances](/images/gbt_importances.png)
 
 ## Possible Improvements
 
